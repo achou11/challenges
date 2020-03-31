@@ -1,0 +1,18 @@
+Some notes about this solution:
+
+- The Table component generally avoids being too opinionated about how to handle the row data. It's more or less up to the end user to provide the data in the desired shape/type.
+
+- The `rows` prop is an array of objects with the following fields:
+  - `id`: a string used as a key for rendering the rows and their cells
+  - `data`: an object whose properties are ideally scalar i.e. a property maps to a singular value as opposed to another object or array
+
+- The `columns` prop is an array of objects with the following fields:
+  - `rawName`: a string of the raw name of the column. The user ideally generates this based off the existing properties in their row objects.
+  - `displayName`: a string of the name that's displayed in the column header of the table.
+  - `sort`: an optional sorting function that's used for calculating the reordering of rows when the column header is clicked. This function accepts the following arguments:
+    - `rows`: an array of the rows passed as a prop to the table
+    - `field`: an optional string value of the column to sort by (this should be one of the `rawName`s). If it's null, then the original rows are returned.
+    - `direction`: an string enum of either `asc` or `desc`
+  This function should return a potentially reordered array of the rows that were provided as input. If a function is not provided, we defer to lodash's `orderBy` function to determine the sorting.
+
+- For the purposes of demonstrating the custom sort functionality, I defined a sorting function for handling dates in `src/customSorts.tsx`, which is used for the `created` and `edited` fields in the data.
