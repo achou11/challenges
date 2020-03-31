@@ -3,7 +3,7 @@ import styled from "styled-components";
 import orderBy from "lodash.orderby";
 
 import colors from "./colors";
-import { ColumnEntry, Row } from "./types";
+import { ColumnEntry, Row, SortOrder } from "./types";
 import Icon from "./Icon";
 import Loading from "./Loading";
 
@@ -76,13 +76,13 @@ const StyledRowCell = styled.td`
   padding: 16px 8px;
   &.no-value {
     font-style: italic;
-    opacity: 0.5;
+    color: ${colors.text.disabled}
   }
 `;
 
 const determineChevronDirection = (
   isActiveField: boolean,
-  currentOrder: "asc" | "desc",
+  currentOrder: SortOrder,
   interactionOccurred: boolean
 ) => {
   if (!interactionOccurred && isActiveField) {
@@ -99,8 +99,31 @@ interface Props<T> {
   initialSortField: string;
   isLoading?: boolean;
   maxHeight?: number;
-  rows: Array<T>;
-  columns: Array<ColumnEntry>;
+  rows: T[];
+  columns: ColumnEntry[];
+}
+
+const columnHasCustomSort = (columns: ColumnEntry[], field: string) => {
+  const column = columns.find(c => c.rawName === field)
+  return column && column.sort
+}
+
+const calculateDisplayedRows = ({ rows, columns, sortField, sortOrder }: {
+  rows: Row[],
+  columns: ColumnEntry[],
+  sortField: string | null,
+  sortOrder: SortOrder,
+}): Row[] => {
+  if (!sortField) return rows
+
+  if (columnHasCustomSort(columns, sortField)) {
+    const column = columns.find(c => c.rawName === sortField)
+    if (column && column.sort) {
+      return column.sort(rows, sortField, sortOrder)
+    }
+  }
+
+  return orderBy(rows, [`data.${sortField}`], [sortOrder])
 }
 
 const Table = ({
@@ -114,7 +137,7 @@ const Table = ({
   const [sortField, setSortField] = React.useState<string | null>(
     initialSortField
   );
-  const [sortOrder, setOrder] = React.useState<"asc" | "desc">("asc");
+  const [sortOrder, setOrder] = React.useState<SortOrder>("asc");
   const [interactionOccurred, setInteractionOccurred] = React.useState(false);
 
   const setOrdering = (fieldName: string) => {
@@ -129,10 +152,6 @@ const Table = ({
       setOrder("asc");
     }
   };
-
-  const displayedRows = sortField
-    ? orderBy(rows, [`data.${sortField}`], [sortOrder])
-    : rows;
 
   return (
     <TableContainer columns={columns.length} maxHeight={!isLoading ? maxHeight : undefined}>
@@ -149,7 +168,6 @@ const Table = ({
                       onClick={(event) => setOrdering(col.rawName)}
                     >
                       <h1>{col.displayName || col.rawName}</h1>
-
                       <div className="icon-container">
                         <Icon
                           direction={determineChevronDirection(
@@ -165,7 +183,7 @@ const Table = ({
               </tr>
             </StickyTableHead>
             <tbody>
-              {displayedRows.map((row) => (
+              {calculateDisplayedRows({ rows, columns, sortField, sortOrder }).map((row) => (
                 <StyledTableRow key={row.id}>
                   {Object.entries(row.data).map(([field, value]) => (
                     <StyledRowCell

@@ -2,6 +2,7 @@ import * as React from "react";
 import styled from "styled-components";
 
 import { PeopleResponse, Result } from "./types";
+import { customDateSort } from './customSorts'
 import Table from "./Table";
 import colors, { palette } from "./Table/colors";
 
@@ -26,7 +27,7 @@ const dateFields = ["created", "edited"];
 const convertValue = (value: any, field: string) => {
   if (value === "n/a") return null;
   if (dateFields.includes(field))
-    return new Date(value).toLocaleDateString("en-US");
+    return new Date(value).toLocaleDateString();
   if (numberFields.includes(field)) return Number(value);
 
   return value;
@@ -57,6 +58,8 @@ const getColumns = (entry: any) =>
     .map((rawColumnName) => ({
       rawName: rawColumnName,
       displayName: fieldMappings[rawColumnName] || undefined,
+      // For the purposes of this demo, we provide a custom sorting function for the date fields
+      sort: dateFields.includes(rawColumnName) ? customDateSort : undefined,
     }));
 
 const Container = styled.main`
@@ -65,6 +68,7 @@ const Container = styled.main`
     margin-top: 32px;
   }
 `;
+
 const FetchButton = styled.button<{ disabled: boolean }>`
   cursor: ${(props) => (props.disabled ? "default" : "pointer")};
   color: ${colors.text.light};

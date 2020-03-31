@@ -13,6 +13,7 @@ const colors = {
     dark: palette.darkPurple,
     medium: palette.mediumPurple,
     light: palette.lightPurple,
+    disabled: palette.lightGray,
   },
 };
 
